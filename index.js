@@ -10,16 +10,23 @@ app.use(express.json());
 app.use(cors());
 
 morgan.token("body", (request) => JSON.stringify(request.body));
-// morgan.token("error", (request) => JSON.stringify(request.body));
+
 // :method :url :status :res[content-length] - :response-time ms
-// app.use(morgan("tiny"));
 app.use(
   morgan(":method :url :status :res[content-length] :response-time ms :body")
 );
 
+/**
+ *
+ * Middleware description
+ * So essentially all middle ware functions are added on to a stack
+ * When we call the next function regularly it continues to the next middleware in the stack
+ * When we call next(error) it passes exclusively to the next error handling functions eventually hitting
+ * the default handler
+ */
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message);
   console.log("error handler function");
+  console.error(`error.message contents: ${error.message}`);
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
   }
@@ -39,16 +46,16 @@ app.get("/api/persons/:id", (request, response, next) => {
       else response.status(404).end();
     })
     .catch((error) => {
-      console.log("WAT IS THIS");
+      console.log("get id error");
       next(error);
     });
 });
 
 app.get("/api/info", (request, response) => {
-  const sizeString = `Phonebook has info for ${persons.length} people`;
-  const date = Date();
-  response.set("Content-Type", "text/html");
-  response.send(Buffer.from(`<p>${sizeString}</p><p>${date}</p>`));
+  Person.count({}).then((count) => {
+    response.set("Content-Type", "text/html");
+    response.send(Buffer.from(`<p>${count}</p><p>${Date()}</p>`));
+  });
 });
 
 app.delete("/api/persons/:id", (request, response, next) => {
@@ -74,6 +81,19 @@ app.post("/api/persons", (request, response) => {
   person.save().then((savedPerson) => {
     response.json(savedPerson);
   });
+});
+
+app.put("/api/persons/:id", (request, response, next) => {
+  const body = request.body;
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then((updatedPerson) => {
+      response.json(updatedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 const unknownEndpoint = (request, response) => {
