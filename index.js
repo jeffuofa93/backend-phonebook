@@ -1,3 +1,5 @@
+//MONGODB_URI='mongodb+srv://jeff:steelers1@phonebook-mongo.19wvo.mongodb.net/phonebook-app?retryWrites=true&w=majority'
+// PORT=3001
 const express = require("express");
 const app = express();
 const cors = require("cors");
