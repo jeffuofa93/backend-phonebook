@@ -1,6 +1,8 @@
+require("dotenv").config();
 const express = require("express");
-const morgan = require("morgan");
 const app = express();
+const Person = require("./models/person");
+const morgan = require("morgan");
 const cors = require("cors");
 
 app.use(express.json());
@@ -10,7 +12,6 @@ app.use(cors());
 morgan.token("body", function getId(request) {
   return JSON.stringify(request.body);
 });
-
 // :method :url :status :res[content-length] - :response-time ms
 // app.use(morgan("tiny"));
 app.use(
@@ -41,17 +42,15 @@ let persons = [
 ];
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((person) => {
+    response.json(person);
+  });
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id);
-  if (person) {
+  Person.findById(request.params.id).then((person) => {
     response.json(person);
-  } else {
-    response.status(404).end();
-  }
+  });
 });
 
 app.get("/api/info", (request, response) => {
@@ -67,40 +66,54 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-const randomNumber = (min, max) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
+// app.post("/api/persons", (request, response) => {
+//   const body = request.body;
+//
+//   const duplicateName = persons.find((person) =>
+//     person.name.includes(body.name)
+//   );
+//
+//   if (!body.name || !body.number) {
+//     return response.status(400).json({
+//       error: "name or number is missing",
+//     });
+//   }
+//
+//   if (duplicateName) {
+//     return response.status(400).json({
+//       error: "name must be unique",
+//     });
+//   }
+//
+//   const person = {
+//     id: randomNumber(0, 100000),
+//     name: body.name,
+//     number: body.number,
+//   };
+//
+//   persons = persons.concat(person);
+//
+//   response.json(person);
+// });
 
 app.post("/api/persons", (request, response) => {
   const body = request.body;
-
-  const duplicateName = persons.find((person) =>
-    person.name.includes(body.name)
-  );
-
+  // case where note doesn't have a content field
   if (!body.name || !body.number) {
-    return response.status(400).json({
-      error: "name or number is missing",
-    });
+    return response.status(400).json({ error: "name or number is missing" });
   }
-
-  if (duplicateName) {
-    return response.status(400).json({
-      error: "name must be unique",
-    });
-  }
-
-  const person = {
-    id: randomNumber(0, 100000),
+  // Note is from the note.js and the noteShema
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
-
-  persons = persons.concat(person);
-
-  response.json(person);
+  });
+  // save adds the element to the database and returns the result
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
