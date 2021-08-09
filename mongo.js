@@ -36,18 +36,22 @@ switch (process.argv.length) {
     });
     break;
   case 5:
-    const newPersonName = process.argv[3];
-    const newPersonNumber = process.argv[4];
+    {
+      const newPersonName = process.argv[3];
+      const newPersonNumber = process.argv[4];
 
-    const person = new Person({
-      name: newPersonName,
-      number: newPersonNumber,
-    });
+      const person = new Person({
+        name: newPersonName,
+        number: newPersonNumber,
+      });
 
-    person.save().then((result) => {
-      console.log(`added ${result.name} number ${result.number} to phonebook`);
-      mongoose.connection.close();
-    });
+      person.save().then((result) => {
+        console.log(
+          `added ${result.name} number ${result.number} to phonebook`
+        );
+        mongoose.connection.close();
+      });
+    }
     break;
 
   default:
