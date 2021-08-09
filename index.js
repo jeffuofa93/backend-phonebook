@@ -9,7 +9,10 @@ app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
 
-morgan.token("body", (request) => JSON.stringify(request.body));
+morgan.token("body", (request) => {
+  if (request.method !== "POST") return " ";
+  return JSON.stringify(request.body);
+});
 
 // :method :url :status :res[content-length] - :response-time ms
 app.use(
