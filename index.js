@@ -1,5 +1,3 @@
-//MONGODB_URI='mongodb+srv://jeff:steelers1@phonebook-mongo.19wvo.mongodb.net/phonebook-app?retryWrites=true&w=majority'
-// PORT=3001
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -27,10 +25,11 @@ app.use(
  * the default handler
  */
 const errorHandler = (error, request, response, next) => {
-  console.log("error handler function");
   console.error(`error.message contents: ${error.message}`);
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
   next(error);
 };
@@ -39,6 +38,22 @@ app.get("/api/persons", (request, response) => {
   Person.find({}).then((person) => {
     response.json(person);
   });
+});
+
+app.post("/api/persons", (request, response, next) => {
+  const body = request.body;
+  // Note is from the note.js and the noteShema
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  });
+  // save adds the element to the database and returns the result
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.get("/api/persons/:id", (request, response, next) => {
@@ -68,30 +83,17 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
-  const body = request.body;
-  // case where note doesn't have a content field
-  if (!body.name || !body.number) {
-    return response.status(400).json({ error: "name or number is missing" });
-  }
-  // Note is from the note.js and the noteShema
-  const person = new Person({
-    name: body.name,
-    number: body.number,
-  });
-  // save adds the element to the database and returns the result
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
-});
-
 app.put("/api/persons/:id", (request, response, next) => {
   const body = request.body;
   const person = {
     name: body.name,
     number: body.number,
   };
-  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+  Person.findByIdAndUpdate(request.params.id, person, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((updatedPerson) => {
       response.json(updatedPerson);
     })
