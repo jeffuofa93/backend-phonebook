@@ -35,24 +35,6 @@ const personSchema = new mongoose.Schema({
 
 personSchema.plugin(uniqueValidator);
 
-// const Person = mongoose.model("Person", personSchema);
-
-// Person.schema.path("number").validate(function (value) {
-//   return value.length >= 8;
-// }, "Invalid number");
-//
-// const opts = { runValidators: true };
-// Person.findByIdAndUpdate(request.params.id, response, opts, function (err) {
-//   assert.equal(re.color.message,
-//     'Invalid color');
-// });
-// // Person.findByIdAndUpdate(
-// //   { runValidators: true, context: "query" },
-// //   function (err) {
-// //     return err;
-// //   }
-// // );
-
 personSchema.set("toJSON", {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString();
@@ -62,4 +44,3 @@ personSchema.set("toJSON", {
 });
 
 module.exports = mongoose.model("Person", personSchema);
-// module.exports = Person;
